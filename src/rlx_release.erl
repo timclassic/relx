@@ -142,7 +142,7 @@ realize(Rel, Pkgs0, World0) ->
     World1 = subset_world(Pkgs0, World0),
     case rlx_topo:sort_apps(World1) of
         {ok, Pkgs1} ->
-            process_specs(realize_erts(Rel), Pkgs1);
+            process_specs(realize_erts(Rel), move_system_apps(Pkgs1));
         Error={error, _} ->
             Error
     end.
@@ -413,3 +413,12 @@ to_atom(RelName)
 to_atom(Else)
   when erlang:is_atom(Else) ->
     Else.
+
+move_system_apps(Packages) ->
+    F = fun(AppName, Pkgs) ->
+                case lists:keytake(AppName, 2, Pkgs) of
+                    {value, App, Pkgs2} -> [ App | Pkgs2 ];
+                    false               -> Pkgs
+                end
+        end,
+    lists:foldl(F, Packages, [lager, sasl, stdlib, kernel]).
